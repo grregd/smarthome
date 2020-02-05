@@ -1,6 +1,7 @@
 /*********
+  Based on
   Rui Santos
-  Complete project details at https://randomnerdtutorials.com  
+  Complete project details at https://randomnerdtutorials.com
 *********/
 
 // Load Wi-Fi library
@@ -18,18 +19,10 @@ WiFiServer server(80);
 // Variable to store the HTTP request
 String header;
 
-// Auxiliar variables to store the current output state
-String output5State = "off";
-String output4State = "off";
-
-// Assign output variables to GPIO pins
-const int output5 = 2;
-const int output4 = 0;
-
 // Current time
 unsigned long currentTime = millis();
 // Previous time
-unsigned long previousTime = 0; 
+unsigned long previousTime = 0;
 // Define timeout time in milliseconds (example: 2000ms = 2s)
 const long timeoutTime = 2000;
 
@@ -57,7 +50,7 @@ public:
       m_outputState = "off";
     else
       m_outputState = "on";
-      
+
     digitalWrite(m_portNum, state);
   }
 
@@ -73,7 +66,7 @@ public:
     {
     //              Serial.println("GPIO 5 off");
       setOutputState(LOW);
-    } 
+    }
   }
 
   void handleOutput(WiFiClient & client)
@@ -92,7 +85,7 @@ public:
     else
     {
       client.println("/off\"><button class=\"button button2\">OFF</button></a></p>");
-    } 
+    }
   }
 
 private:
@@ -143,7 +136,6 @@ std::vector<Handler> handlers{
 
 
 void setup() {
-//pinMode(output4, FUNCTION_3);   
   Serial.begin(115200);
   Serial.println();
   Serial.println(__LINE__);
@@ -151,8 +143,6 @@ void setup() {
   // Initialize the output variables as outputs
   Serial.println(__LINE__);
   delay(10);
-//  setupPort(output5);
-//  setupPort(output4);
 
   initAll(handlers);
 
@@ -173,11 +163,8 @@ void setup() {
 
 
 
-void loop(){
-  static int cnt = 0;
-  if (! (++cnt % 100000))
-    Serial.println(cnt);
-    
+void loop()
+{
   WiFiClient client = server.available();   // Listen for incoming clients
 
   delay(100);
@@ -189,7 +176,7 @@ void loop(){
     currentTime = millis();
     previousTime = currentTime;
     while (client.connected() && currentTime - previousTime <= timeoutTime) { // loop while the client's connected
-      currentTime = millis();         
+      currentTime = millis();
       if (client.available()) {             // if there's bytes to read from the client,
         char c = client.read();             // read a byte, then
 //        Serial.write(c);                    // print it out the serial monitor
@@ -206,62 +193,25 @@ void loop(){
             client.println();
 
             handleAllInput(handlers);
-//            // turns the GPIOs on and off
-//            if (header.indexOf("GET /5/on") >= 0) {
-////              Serial.println("GPIO 5 on");
-//              output5State = "on";
-//              digitalWrite(output5, HIGH);
-//            } else if (header.indexOf("GET /5/off") >= 0) {
-////              Serial.println("GPIO 5 off");
-//              output5State = "off";
-//              digitalWrite(output5, LOW);
-//            } 
-//            else if (header.indexOf("GET /4/on") >= 0) {
-////              Serial.println("GPIO 4 on");
-//              output4State = "on";
-//              digitalWrite(output4, HIGH);
-//            }
-//            else if (header.indexOf("GET /4/off") >= 0) {
-////              Serial.println("GPIO 4 off");
-//              output4State = "off";
-//              digitalWrite(output4, LOW);
-//            }
-            
+
             // Display the HTML web page
             client.println("<!DOCTYPE html><html>");
             client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
             client.println("<link rel=\"icon\" href=\"data:,\">");
-            // CSS to style the on/off buttons 
+            // CSS to style the on/off buttons
             // Feel free to change the background-color and font-size attributes to fit your preferences
             client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
             client.println(".button { background-color: #195B6A; border: none; color: white; padding: 16px 40px;");
             client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
             client.println(".button2 {background-color: #77878A;}</style></head>");
-            
+
             // Web Page Heading
             client.println("<body><h1>ESP8266 Web Server</h1>");
 
             handleAllOuput(client, handlers);
-//            // Display current state, and ON/OFF buttons for GPIO 5  
-//            client.println("<p>GPIO 5 - State " + output5State + "</p>");
-//            // If the output5State is off, it displays the ON button       
-//            if (output5State=="off") {
-//              client.println("<p><a href=\"/5/on\"><button class=\"button\">ON</button></a></p>");
-//            } else {
-//              client.println("<p><a href=\"/5/off\"><button class=\"button button2\">OFF</button></a></p>");
-//            } 
-//               
-//            // Display current state, and ON/OFF buttons for GPIO 4  
-//            client.println("<p>GPIO 4 - State " + output4State + "</p>");
-//            // If the output4State is off, it displays the ON button       
-//            if (output4State=="off") {
-//              client.println("<p><a href=\"/4/on\"><button class=\"button\">ON</button></a></p>");
-//            } else {
-//              client.println("<p><a href=\"/4/off\"><button class=\"button button2\">OFF</button></a></p>");
-//            }
 
             client.println("</body></html>");
-            
+
             // The HTTP response ends with another blank line
             client.println();
             // Break out of the while loop
