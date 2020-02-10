@@ -2,6 +2,7 @@
 #include "handlers.h"
 
 #include <ESP8266WiFi.h>
+
 #include <string>
 
 namespace Handlers
@@ -14,6 +15,9 @@ Handler::Handler(int portNum, int initialState, const std::string& headerMarker,
   , m_headerMarkerOff(headerMarker+"off")
   , m_num(num)
   {
+    m_stdHandler = [this](WiFiClient& client){ stdOutputHandler(client); };
+    m_configHandler = [this](WiFiClient& client){ configOutputHandler(client); };
+    m_outputHandler = m_stdHandler;
   }
 
 void Handler::init()
@@ -34,20 +38,28 @@ void Handler::setOutputState(int state)
 
 void Handler::handleInput(const std::string & header)
 {
+  m_outputHandler = m_stdHandler;
   if (header.find(m_headerMarkerOn.c_str()) != std::string::npos)
   {
-  //              Serial.println("GPIO 5 on");
-
     setOutputState(HIGH);
   }
   else if (header.find(m_headerMarkerOff.c_str()) != std::string::npos)
   {
-  //              Serial.println("GPIO 5 off");
     setOutputState(LOW);
+  }
+  else if (header.find("GET /config") != std::string::npos)
+  {
+    m_outputHandler = m_configHandler;
   }
 }
 
+
 void Handler::handleOutput(WiFiClient & client)
+{
+  m_outputHandler(client);
+}
+
+void Handler::stdOutputHandler(WiFiClient & client)
 {
   client.print("<p>GPIO ");
   client.print(m_num.c_str());
@@ -64,6 +76,15 @@ void Handler::handleOutput(WiFiClient & client)
   {
     client.println("/off\"><button class=\"button button2\">OFF</button></a></p>");
   }
+}
+void Handler::configOutputHandler(WiFiClient & client)
+{
+  client.print("<p>portNum: ");
+  client.print(m_portNum);
+  client.print("</p><br>");
+  client.print("initialState: ");
+  client.print(m_initialState);
+  client.print("</p><br>");
 }
 
 }
