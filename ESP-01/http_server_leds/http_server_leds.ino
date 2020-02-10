@@ -4,10 +4,18 @@
   Complete project details at https://randomnerdtutorials.com
 *********/
 
+
+#include "handlers.h"
+
+
 // Load Wi-Fi library
 #include <ESP8266WiFi.h>
 #include <string>
 #include <vector>
+
+
+using namespace Handlers;
+
 
 // Replace with your network credentials
 const char* ssid     = "";
@@ -17,7 +25,7 @@ const char* password = "";
 WiFiServer server(80);
 
 // Variable to store the HTTP request
-String header;
+std::string header;
 
 // Current time
 unsigned long currentTime = millis();
@@ -25,77 +33,6 @@ unsigned long currentTime = millis();
 unsigned long previousTime = 0;
 // Define timeout time in milliseconds (example: 2000ms = 2s)
 const long timeoutTime = 2000;
-
-class Handler
-{
-public:
-  Handler(int portNum, int initialState, const std::string& headerMarker, const std::string & num)
-  : m_portNum(portNum)
-  , m_initialState(initialState)
-  , m_headerMarkerOn(headerMarker+"on")
-  , m_headerMarkerOff(headerMarker+"off")
-  , m_num(num)
-  {
-  }
-
-  void init()
-  {
-    pinMode(m_portNum, OUTPUT);
-    setOutputState(m_initialState);
-  }
-
-  void setOutputState(int state)
-  {
-    if (state == LOW)
-      m_outputState = "off";
-    else
-      m_outputState = "on";
-
-    digitalWrite(m_portNum, state);
-  }
-
-  void handleInput()
-  {
-    if (header.indexOf(m_headerMarkerOn.c_str()) >= 0)
-    {
-    //              Serial.println("GPIO 5 on");
-
-      setOutputState(HIGH);
-    }
-    else if (header.indexOf(m_headerMarkerOff.c_str()) >= 0)
-    {
-    //              Serial.println("GPIO 5 off");
-      setOutputState(LOW);
-    }
-  }
-
-  void handleOutput(WiFiClient & client)
-  {
-    client.print("<p>GPIO ");
-    client.print(m_num.c_str());
-    client.println(" - State ");
-    client.print(m_outputState.c_str());
-    client.println("</p>");
-    client.print("<p><a href=\"/");
-    client.print(m_num.c_str());
-    if (m_outputState == "off")
-    {
-      client.println("/on\"><button class=\"button\">ON</button></a></p>");
-    }
-    else
-    {
-      client.println("/off\"><button class=\"button button2\">OFF</button></a></p>");
-    }
-  }
-
-private:
-  int m_portNum;
-  int m_initialState;
-  std::string m_headerMarkerOn;
-  std::string m_headerMarkerOff;
-  std::string m_outputState;
-  std::string m_num;
-};
 
 void setupPort(int port)
 {
@@ -112,11 +49,11 @@ void initAll(std::vector<Handler>& handlers)
   }
 }
 
-void handleAllInput(std::vector<Handler>& handlers)
+void handleAllInput(std::vector<Handler>& handlers, const std::string & header)
 {
   for (auto & handler: handlers)
   {
-    handler.handleInput();
+    handler.handleInput(header);
   }
 }
 
@@ -192,7 +129,7 @@ void loop()
             client.println("Connection: close");
             client.println();
 
-            handleAllInput(handlers);
+            handleAllInput(handlers, header);
 
             // Display the HTML web page
             client.println("<!DOCTYPE html><html>");
