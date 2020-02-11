@@ -3,6 +3,7 @@
 
 
 #include <string>
+#include <vector>
 #include <functional>
 
 class WiFiClient;
@@ -10,6 +11,8 @@ class WiFiClient;
 
 namespace Handlers 
 {
+
+
 class Handler
 {
 public:
@@ -38,5 +41,12 @@ private:
   std::function<void(WiFiClient &)> m_configHandler;
   std::function<void(WiFiClient &)> m_outputHandler;
 };
+
+void initAll(std::vector<Handler>& handlers);
+
+void handleAllInput(std::vector<Handler>& handlers, const std::string & header);
+
+void handleAllOuput(WiFiClient & client, std::vector<Handler>& handlers);
+
 
 }

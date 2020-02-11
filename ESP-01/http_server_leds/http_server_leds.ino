@@ -41,29 +41,6 @@ void setupPort(int port)
 }
 
 
-void initAll(std::vector<Handler>& handlers)
-{
-  for (auto & handler: handlers)
-  {
-    handler.init();
-  }
-}
-
-void handleAllInput(std::vector<Handler>& handlers, const std::string & header)
-{
-  for (auto & handler: handlers)
-  {
-    handler.handleInput(header);
-  }
-}
-
-void handleAllOuput(WiFiClient & client, std::vector<Handler>& handlers)
-{
-  for (auto & handler: handlers)
-  {
-    handler.handleOutput(client);
-  }
-}
 
 std::vector<Handler> handlers{
     Handler(2, LOW, "GET /4/", "4")
