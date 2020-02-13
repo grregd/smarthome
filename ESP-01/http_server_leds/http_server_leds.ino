@@ -78,9 +78,10 @@ void setup() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 
-  fetchConfig();
+  String ipStr{ WiFi.localIP().toString() };
 
-  
+  fetchConfig(ipStr.substring(ipStr.lastIndexOf('.') + 1));
+
   server.begin();
 }
 
@@ -156,17 +157,18 @@ void loop()
   }
 }
 
-void fetchConfig()
+bool fetchConfig(const String & id)
 {
-  Serial.println("fetchConfig");
   
 //  "https://raw.githubusercontent.com/grregd/smarthome/master/README.md?token=AAG2525BSVQHFDAQ5WDI6JK6IXB6M";
-  String url = "/grregd/smarthome/master/configs/config1";
+  String url = "/grregd/smarthome/master/configs/config_" + id;
   static const char host[] = "raw.githubusercontent.com";
   const int httpsPort = 443;
   
   static const char fingerprint[] = "CC:AA:48:48:66:46:0E:91:53:2C:9C:7C:23:2A:B1:74:4D:29:9D:33";
 
+  Serial.print("fetchConfig from ");
+  Serial.println(url);
   
   WiFiClientSecure client;  
   
@@ -174,7 +176,7 @@ void fetchConfig()
   
   if (!client.connect(host, httpsPort)) {
     Serial.println("connection failed");
-    return;
+    return false;
   }
 
   if (client.verify(fingerprint, host)) {
@@ -198,12 +200,18 @@ void fetchConfig()
     }
   }             
 
-  String line = client.readStringUntil('\n');
-  Serial.println(line);
-  if (line.startsWith("{\"state\":\"success\"")) {
-    Serial.println("esp8266/Arduino CI successfull!");
-  } else {
-    Serial.println("esp8266/Arduino CI has failed");
-  }  
+  while (client.available()) {
+    String line = client.readStringUntil('\n');
+    Serial.println(line);
+//    if (line.startsWith("{\"state\":\"success\"")) {
+//      Serial.println("esp8266/Arduino CI successfull!");
+//    } else {
+//      Serial.println("esp8266/Arduino CI has failed");
+//    }  
+  }
+  
+  Serial.println("fetchConfig success");
+
+  return true;
 }
 
