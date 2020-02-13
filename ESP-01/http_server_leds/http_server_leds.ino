@@ -10,6 +10,7 @@
 
 // Load Wi-Fi library
 #include <ESP8266WiFi.h>
+#include <WiFiClientSecure.h>
 #include <string>
 #include <vector>
 
@@ -23,6 +24,8 @@ const char* password = "";
 
 // Set web server port number to 80
 WiFiServer server(80);
+
+
 
 // Variable to store the HTTP request
 std::string header;
@@ -67,11 +70,17 @@ void setup() {
     delay(500);
     Serial.print(".");
   }
+
+  
   // Print local IP address and start web server
   Serial.println("");
   Serial.println("WiFi connected.");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+
+  fetchConfig();
+
+  
   server.begin();
 }
 
@@ -145,5 +154,56 @@ void loop()
     Serial.println("Client disconnected.");
     Serial.println("");
   }
+}
+
+void fetchConfig()
+{
+  Serial.println("fetchConfig");
+  
+//  "https://raw.githubusercontent.com/grregd/smarthome/master/README.md?token=AAG2525BSVQHFDAQ5WDI6JK6IXB6M";
+  String url = "/grregd/smarthome/master/configs/config1";
+  static const char host[] = "raw.githubusercontent.com";
+  const int httpsPort = 443;
+  
+  static const char fingerprint[] = "CC:AA:48:48:66:46:0E:91:53:2C:9C:7C:23:2A:B1:74:4D:29:9D:33";
+
+  
+  WiFiClientSecure client;  
+  
+  client.setFingerprint(fingerprint);
+  
+  if (!client.connect(host, httpsPort)) {
+    Serial.println("connection failed");
+    return;
+  }
+
+  if (client.verify(fingerprint, host)) {
+    Serial.println("certificate matches");
+  } else {
+    Serial.println("certificate doesn't match");
+  }  
+
+  
+  client.print(String("GET ") + url + " HTTP/1.1\r\n" +
+             "Host: " + host + "\r\n" +
+             "User-Agent: BuildFailureDetectorESP8266\r\n" +
+             "Connection: close\r\n\r\n");  
+
+  while (client.connected()) {
+    String line = client.readStringUntil('\n');
+    if (line == "\r") {
+      Serial.println("headers received");
+      Serial.println(line);
+      break;
+    }
+  }             
+
+  String line = client.readStringUntil('\n');
+  Serial.println(line);
+  if (line.startsWith("{\"state\":\"success\"")) {
+    Serial.println("esp8266/Arduino CI successfull!");
+  } else {
+    Serial.println("esp8266/Arduino CI has failed");
+  }  
 }
 
