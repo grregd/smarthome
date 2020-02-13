@@ -1,2 +1,10 @@
 # Test config
 
+ModuleName: module_01
+OutputsNumber: 2
+Output1Port: 2
+Output1Active: LOW
+Output2Port: 3
+Output2Active: LOW
+
+
