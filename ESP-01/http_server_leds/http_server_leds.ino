@@ -43,8 +43,8 @@ void setupPort(int port)
 
 
 std::vector<Handler> handlers{
-    Handler(2, LOW, "GET /4/", "4")
-  , Handler(3, HIGH, "GET /5/", "5")
+    Handler(2, LOW, "GET /4/", "4", true)
+  , Handler(3, HIGH, "GET /5/", "5", true)
 };
 
 

@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <ESP8266WiFi.h>
 
 class WiFiClient;
 
@@ -12,11 +13,28 @@ class WiFiClient;
 namespace Handlers 
 {
 
+template< bool logic >
+struct LevelLogic;
+
+template<>
+struct LevelLogic< true >
+{
+  static constexpr auto Off = LOW;
+  static constexpr auto On = HIGH;
+};
+
+template<>
+struct LevelLogic< false >
+{
+  static constexpr auto Off = HIGH;
+  static constexpr auto On = LOW;
+};
+
 
 class Handler
 {
 public:
-  Handler(int portNum, int initialState, const std::string& headerMarker, const std::string & num);
+  Handler(int portNum, int initialState, const std::string& headerMarker, const std::string & num, bool logic);
 
   void init();
 

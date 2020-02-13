@@ -8,7 +8,10 @@
 namespace Handlers
 {
 
-Handler::Handler(int portNum, int initialState, const std::string& headerMarker, const std::string & num)
+using LogicPositive = LevelLogic< true >;
+using LogicNegative = LevelLogic< false >;
+
+Handler::Handler(int portNum, int initialState, const std::string& headerMarker, const std::string & num, bool logic)
   : m_portNum(portNum)
   , m_initialState(initialState)
   , m_headerMarkerOn(headerMarker+"on")
