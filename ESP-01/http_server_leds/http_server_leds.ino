@@ -7,10 +7,10 @@
 
 #include "handlers.h"
 
-
 // Load Wi-Fi library
 #include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
+#include <ArduinoJson.h>
 #include <string>
 #include <vector>
 
@@ -71,7 +71,7 @@ void setup() {
     Serial.print(".");
   }
 
-  
+
   // Print local IP address and start web server
   Serial.println("");
   Serial.println("WiFi connected.");
@@ -80,12 +80,19 @@ void setup() {
 
   String ipStr{ WiFi.localIP().toString() };
 
-  fetchConfig(ipStr.substring(ipStr.lastIndexOf('.') + 1));
+  parseConfig(
+    fetchConfig(
+      ipStr.substring(ipStr.lastIndexOf('.') + 1)),
+      [&handlers](unsigned port, unsigned active,
+        const String& headerMarker,
+        const String& num, bool logic){
+        handlers.push_back(Handler{
+          port, active, headerMarker, num, logic})
+      });
+
 
   server.begin();
 }
-
-
 
 void loop()
 {
@@ -157,23 +164,23 @@ void loop()
   }
 }
 
-bool fetchConfig(const String & id)
+String fetchConfig(const String & id)
 {
-  
+
 //  "https://raw.githubusercontent.com/grregd/smarthome/master/README.md?token=AAG2525BSVQHFDAQ5WDI6JK6IXB6M";
   String url = "/grregd/smarthome/master/configs/config_" + id;
   static const char host[] = "raw.githubusercontent.com";
   const int httpsPort = 443;
-  
+
   static const char fingerprint[] = "CC:AA:48:48:66:46:0E:91:53:2C:9C:7C:23:2A:B1:74:4D:29:9D:33";
 
   Serial.print("fetchConfig from ");
   Serial.println(url);
-  
-  WiFiClientSecure client;  
-  
+
+  WiFiClientSecure client;
+
   client.setFingerprint(fingerprint);
-  
+
   if (!client.connect(host, httpsPort)) {
     Serial.println("connection failed");
     return false;
@@ -183,13 +190,13 @@ bool fetchConfig(const String & id)
     Serial.println("certificate matches");
   } else {
     Serial.println("certificate doesn't match");
-  }  
+  }
 
-  
+
   client.print(String("GET ") + url + " HTTP/1.1\r\n" +
              "Host: " + host + "\r\n" +
              "User-Agent: BuildFailureDetectorESP8266\r\n" +
-             "Connection: close\r\n\r\n");  
+             "Connection: close\r\n\r\n");
 
   while (client.connected()) {
     String line = client.readStringUntil('\n');
@@ -198,20 +205,43 @@ bool fetchConfig(const String & id)
       Serial.println(line);
       break;
     }
-  }             
+  }
 
+  String result;
   while (client.available()) {
     String line = client.readStringUntil('\n');
+    result += line;
     Serial.println(line);
 //    if (line.startsWith("{\"state\":\"success\"")) {
 //      Serial.println("esp8266/Arduino CI successfull!");
 //    } else {
 //      Serial.println("esp8266/Arduino CI has failed");
-//    }  
+//    }
   }
-  
+
   Serial.println("fetchConfig success");
 
-  return true;
+  return result;
 }
 
+void parseConfig( const String & configText,
+  std::function<void(unsigned port,
+                     unsigned active,
+                     const String& headerMarker,
+                     const String& num,
+                     bool logic)> callback)
+{
+  StaticJsonBuffer<JSON_BUFFER_CAPACITY> jsonBuffer;
+
+  configObject& root = jsonBuffer.parseObject(configText);
+  auto& outputs = configObject["outputs"];
+  for (JsonObject & output: outputs)
+  {
+    callback(
+      output["port"].at<unsigned>,
+      output["initial"].as<String>() == "LOW" ? LOW : HIGH,
+      output["headerMarker"].as<String>(),
+      output["num"].as<String>(),
+      true );
+  }
+}

@@ -1,10 +1,23 @@
-# Test config
-
-ModuleName: module_01
-OutputsNumber: 2
-Output1Port: 2
-Output1Active: LOW
-Output2Port: 3
-Output2Active: LOW
-
-
+{
+"config":
+{
+    "ModuleName": "module_01",
+    "outputs":
+    [
+        {
+            "port": "2",
+            "initial": "HIGH",
+            "active": "LOW",
+            "headerMarker": "",
+            "num": ""
+        },
+        {
+            "port": "2",
+            "initial": "HIGH",
+            "active": "LOW",
+            "headerMarker": "",
+            "num": ""
+        }
+    ]
+}
+}
