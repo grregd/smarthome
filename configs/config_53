@@ -8,15 +8,15 @@
             "port": "2",
             "initial": "HIGH",
             "active": "LOW",
-            "headerMarker": "",
-            "num": ""
+            "headerMarker": "GET /4/",
+            "num": "4"
         },
         {
             "port": "2",
             "initial": "HIGH",
             "active": "LOW",
-            "headerMarker": "",
-            "num": ""
+            "headerMarker": "GET /5/",
+            "num": "5"
         }
     ]
 }

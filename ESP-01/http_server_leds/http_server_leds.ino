@@ -10,9 +10,9 @@
 // Load Wi-Fi library
 #include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
-#include <ArduinoJson.h>
 #include <string>
 #include <vector>
+#include <ArduinoJson.h>
 
 
 using namespace Handlers;
@@ -46,8 +46,8 @@ void setupPort(int port)
 
 
 std::vector<Handler> handlers{
-    Handler(2, LOW, "GET /4/", "4", true)
-  , Handler(3, HIGH, "GET /5/", "5", true)
+//    Handler(2, LOW, "GET /4/", "4", true)
+//  , Handler(3, HIGH, "GET /5/", "5", true)
 };
 
 
@@ -83,12 +83,14 @@ void setup() {
   parseConfig(
     fetchConfig(
       ipStr.substring(ipStr.lastIndexOf('.') + 1)),
-      [&handlers](unsigned port, unsigned active,
+      [](int port, int activeLevel,
         const String& headerMarker,
-        const String& num, bool logic){
-        handlers.push_back(Handler{
-          port, active, headerMarker, num, logic})
-      });
+        const String& num, bool logic)
+        {
+          Serial.println(headerMarker);
+          handlers.push_back(Handler{
+            port, activeLevel, headerMarker.c_str(), num.c_str(), logic});
+       });
 
 
   server.begin();
@@ -183,7 +185,7 @@ String fetchConfig(const String & id)
 
   if (!client.connect(host, httpsPort)) {
     Serial.println("connection failed");
-    return false;
+    return {};
   }
 
   if (client.verify(fingerprint, host)) {
@@ -225,20 +227,30 @@ String fetchConfig(const String & id)
 }
 
 void parseConfig( const String & configText,
-  std::function<void(unsigned port,
-                     unsigned active,
+  std::function<void(int port,
+                     int activeLevel,
                      const String& headerMarker,
                      const String& num,
                      bool logic)> callback)
 {
-  StaticJsonBuffer<JSON_BUFFER_CAPACITY> jsonBuffer;
+  StaticJsonDocument<1024> configDocument;
 
-  configObject& root = jsonBuffer.parseObject(configText);
-  auto& outputs = configObject["outputs"];
-  for (JsonObject & output: outputs)
+  auto error = deserializeJson(configDocument, configText);
+  if (error)
   {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.c_str());
+    return;
+  }
+
+  auto config = configDocument["config"];
+  Serial.println(config["ModuleName"].as<String>());
+  auto outputs = config["outputs"].as<JsonArray>();
+  for (const JsonObject & output: outputs)
+  {
+    Serial.println(".");
     callback(
-      output["port"].at<unsigned>,
+      output["port"].as<int>(),
       output["initial"].as<String>() == "LOW" ? LOW : HIGH,
       output["headerMarker"].as<String>(),
       output["num"].as<String>(),
