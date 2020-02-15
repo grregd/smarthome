@@ -12,7 +12,7 @@
             "num": "4"
         },
         {
-            "port": "2",
+            "port": "3",
             "initial": "HIGH",
             "active": "LOW",
             "headerMarker": "GET /5/",
