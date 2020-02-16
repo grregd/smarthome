@@ -17,6 +17,7 @@
 
 using namespace Handlers;
 
+std::vector<Handler> handlers;
 
 // Replace with your network credentials
 const char* ssid     = "";
@@ -24,8 +25,6 @@ const char* password = "";
 
 // Set web server port number to 80
 WiFiServer server(80);
-
-
 
 // Variable to store the HTTP request
 std::string header;
@@ -43,15 +42,6 @@ void setupPort(int port)
   digitalWrite(port, LOW);
 }
 
-
-
-std::vector<Handler> handlers{
-//    Handler(2, LOW, "GET /4/", "4", true)
-//  , Handler(3, HIGH, "GET /5/", "5", true)
-};
-
-
-
 void setup() {
   Serial.begin(115200);
   Serial.println();
@@ -60,8 +50,6 @@ void setup() {
   // Initialize the output variables as outputs
   Serial.println(__LINE__);
   delay(10);
-
-  initAll(handlers);
 
   // Connect to Wi-Fi network with SSID and password
   Serial.println(ssid);
@@ -81,17 +69,18 @@ void setup() {
   String ipStr{ WiFi.localIP().toString() };
 
   parseConfig(
-    fetchConfig(
-      ipStr.substring(ipStr.lastIndexOf('.') + 1)),
-      [](int port, int activeLevel,
-        const String& headerMarker,
-        const String& num, bool logic)
-        {
-          Serial.println(headerMarker);
-          handlers.push_back(Handler{
-            port, activeLevel, headerMarker.c_str(), num.c_str(), logic});
-       });
+    fetchConfig(ipStr.substring(ipStr.lastIndexOf('.') + 1)),
+    [](int port, int activeLevel,
+       const String & headerMarker,
+       const String & num, bool logic)
+      {
+        handlers.push_back(Handler(port, activeLevel, 
+            headerMarker.c_str(), num.c_str(), logic));
+      }
+  );
 
+
+  initAll(handlers);
 
   server.begin();
 }
@@ -177,7 +166,7 @@ String fetchConfig(const String & id)
   static const char fingerprint[] = "CC:AA:48:48:66:46:0E:91:53:2C:9C:7C:23:2A:B1:74:4D:29:9D:33";
 
   Serial.print("fetchConfig from ");
-  Serial.println(String(host)+url);
+  Serial.println(String(host) + url);
 
   WiFiClientSecure client;
 
@@ -196,9 +185,9 @@ String fetchConfig(const String & id)
 
 
   client.print(String("GET ") + url + " HTTP/1.1\r\n" +
-             "Host: " + host + "\r\n" +
-             "User-Agent: BuildFailureDetectorESP8266\r\n" +
-             "Connection: close\r\n\r\n");
+               "Host: " + host + "\r\n" +
+               "User-Agent: BuildFailureDetectorESP8266\r\n" +
+               "Connection: close\r\n\r\n");
 
   while (client.connected()) {
     String line = client.readStringUntil('\n');
@@ -214,11 +203,11 @@ String fetchConfig(const String & id)
     String line = client.readStringUntil('\n');
     result += line;
     Serial.println(line);
-//    if (line.startsWith("{\"state\":\"success\"")) {
-//      Serial.println("esp8266/Arduino CI successfull!");
-//    } else {
-//      Serial.println("esp8266/Arduino CI has failed");
-//    }
+    //    if (line.startsWith("{\"state\":\"success\"")) {
+    //      Serial.println("esp8266/Arduino CI successfull!");
+    //    } else {
+    //      Serial.println("esp8266/Arduino CI has failed");
+    //    }
   }
 
   Serial.println("fetchConfig success");
@@ -227,11 +216,11 @@ String fetchConfig(const String & id)
 }
 
 void parseConfig( const String & configText,
-  std::function<void(int port,
-                     int activeLevel,
-                     const String& headerMarker,
-                     const String& num,
-                     bool logic)> callback)
+                  std::function<void(int port,
+                                     int activeLevel,
+                                     const String& headerMarker,
+                                     const String& num,
+                                     bool logic)> callback)
 {
   StaticJsonDocument<1024> configDocument;
 
@@ -246,7 +235,7 @@ void parseConfig( const String & configText,
   auto config = configDocument["config"];
   Serial.println(config["ModuleName"].as<String>());
   auto outputs = config["outputs"].as<JsonArray>();
-  for (const JsonObject & output: outputs)
+  for (const JsonObject & output : outputs)
   {
     Serial.println(".");
     callback(

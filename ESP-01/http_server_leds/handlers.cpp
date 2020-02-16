@@ -2,11 +2,24 @@
 #include "handlers.h"
 
 #include <ESP8266WiFi.h>
+#include <hardwareSerial.h>
 
+#include <cstdio>
 #include <string>
 
 namespace Handlers
 {
+template< size_t N >
+char* mysnprintf(char (&buffer)[N], const char* format, ...)
+{
+  va_list vl;
+  va_start(vl, format);
+  vsnprintf(buffer, N, format, vl);
+  va_end(vl);
+  
+  return buffer;
+}
+
 
 using LogicPositive = LevelLogic< true >;
 using LogicNegative = LevelLogic< false >;
@@ -18,9 +31,6 @@ Handler::Handler(int portNum, int initialState, const std::string& headerMarker,
   , m_headerMarkerOff(headerMarker+"off")
   , m_num(num)
   {
-    m_stdHandler = [this](WiFiClient& client){ stdOutputHandler(client); };
-    m_configHandler = [this](WiFiClient& client){ configOutputHandler(client); };
-    m_outputHandler = m_stdHandler;
   }
 
 void Handler::init()
@@ -41,7 +51,8 @@ void Handler::setOutputState(int state)
 
 void Handler::handleInput(const std::string & header)
 {
-  m_outputHandler = m_stdHandler;
+  m_outputHandler = [this](WiFiClient& client){ stdOutputHandler(client); };
+  
   if (header.find(m_headerMarkerOn.c_str()) != std::string::npos)
   {
     setOutputState(HIGH);
@@ -52,7 +63,7 @@ void Handler::handleInput(const std::string & header)
   }
   else if (header.find("GET /config") != std::string::npos)
   {
-    m_outputHandler = m_configHandler;
+    m_outputHandler = [this](WiFiClient& client){ configOutputHandler(client); };
   }
 }
 
@@ -64,13 +75,11 @@ void Handler::handleOutput(WiFiClient & client)
 
 void Handler::stdOutputHandler(WiFiClient & client)
 {
-  client.print("<p>GPIO ");
-  client.print(m_num.c_str());
-  client.println(" - State ");
-  client.print(m_outputState.c_str());
-  client.println("</p>");
-  client.print("<p><a href=\"/");
-  client.print(m_num.c_str());
+  char buffer[128];
+  
+  client.println(mysnprintf(buffer, "<p>GPIO %s - State %s</p>\n", m_num.c_str(), m_outputState.c_str()));
+  client.println(mysnprintf(buffer, "<p><a href=\"/%s", m_num.c_str()));
+  
   if (m_outputState == "off")
   {
     client.println("/on\"><button class=\"button\">ON</button></a></p>");
@@ -82,12 +91,12 @@ void Handler::stdOutputHandler(WiFiClient & client)
 }
 void Handler::configOutputHandler(WiFiClient & client)
 {
-  client.print("<p>portNum: ");
-  client.print(m_portNum);
-  client.print("</p><br>");
-  client.print("initialState: ");
-  client.print(m_initialState);
-  client.print("</p><br>");
+  char buffer[256];
+
+  client.println(mysnprintf(buffer, "<p>portNum: %d</p>\n", m_portNum));
+  client.println(mysnprintf(buffer, "<p>initialState: %d</p>\n", m_initialState));
+  client.println(mysnprintf(buffer, "<p>num: %s</p>\n", m_num.c_str()));
+  client.println(mysnprintf(buffer, "<p>headerMarkerOn: %s</p>\n", m_headerMarkerOn.c_str()));
 }
 
 

@@ -49,14 +49,12 @@ private:
   void configOutputHandler(WiFiClient & client);
 
 private:
-  int m_portNum;
-  int m_initialState;
+  int m_portNum = 0;
+  int m_initialState = 0;
   std::string m_headerMarkerOn;
   std::string m_headerMarkerOff;
   std::string m_outputState;
   std::string m_num;
-  std::function<void(WiFiClient &)> m_stdHandler;
-  std::function<void(WiFiClient &)> m_configHandler;
   std::function<void(WiFiClient &)> m_outputHandler;
 };
 
