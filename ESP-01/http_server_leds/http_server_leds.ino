@@ -6,6 +6,7 @@
 
 #include "handlers.h"
 #include "parsing_config.h"
+#include "html_fragments.h"
 
 // Load Wi-Fi library
 #include <ESP8266WiFi.h>
@@ -100,7 +101,6 @@ void loop()
       currentTime = millis();
       if (client.available()) {             // if there's bytes to read from the client,
         char c = client.read();             // read a byte, then
-//        Serial.write(c);                    // print it out the serial monitor
         header += c;
         if (c == '\n') {                    // if the byte is a newline character
           // if the current line is blank, you got two newline characters in a row.
@@ -108,30 +108,16 @@ void loop()
           if (currentLine.length() == 0) {
             // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
             // and a content-type so the client knows what's coming, then a blank line:
-            client.println("HTTP/1.1 200 OK");
-            client.println("Content-type:text/html");
-            client.println("Connection: close");
+            client.println(http200);
             client.println();
 
             handleAllInput(handlers, header);
 
-            // Display the HTML web page
-            client.println("<!DOCTYPE html><html>");
-            client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
-            client.println("<link rel=\"icon\" href=\"data:,\">");
-            // CSS to style the on/off buttons
-            // Feel free to change the background-color and font-size attributes to fit your preferences
-            client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
-            client.println(".button { background-color: #195B6A; border: none; color: white; padding: 16px 40px;");
-            client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
-            client.println(".button2 {background-color: #77878A;}</style></head>");
-
-            // Web Page Heading
-            client.println("<body><h1>ESP8266 Web Server</h1>");
-
+              
+            client.println(htmlHead.c_str());
+            client.println(htmlBodyBeg.c_str());
             handleAllOuput(client, handlers);
-
-            client.println("</body></html>");
+            client.println(htmlBodyEnd.c_str());
 
             // The HTTP response ends with another blank line
             client.println();
