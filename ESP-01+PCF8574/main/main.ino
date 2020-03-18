@@ -1,3 +1,7 @@
+
+#define xstr(s) str(s)
+#define str(s) #s
+
 //#define PCF8574_LOW_MEMORY
 #define PCF8574_DEBUG
 #define SDA 0
@@ -7,6 +11,19 @@
 #include <PCF8574.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
+
+#include "c:\Users\grregd\Projects\smarthome\ESP-01\http_server_leds\html_fragments.h"
+#include "c:\Users\grregd\Projects\smarthome\ESP-01\http_server_leds\parsing_config.h"
+#include "c:\Users\grregd\Projects\smarthome\ESP-01\http_server_leds\parsing_config.cpp"
+#include "c:\Users\grregd\Projects\smarthome\ESP-01\http_server_leds\handlers.h"
+#include "c:\Users\grregd\Projects\smarthome\ESP-01\http_server_leds\handlers.cpp"
+
+
+std::string header;
+
+using namespace Handlers;
+
+std::vector<Handler> handlers;
 
 static const auto ON = LOW;
 static const auto OFF = HIGH;
@@ -27,17 +44,36 @@ PCF8574 pcf(IOMOD_ADDRESS_TWI, 0, 2);
 // Set web server port number to 80
 WiFiServer server(80);
 
-void setup() {
-//  Serial.begin(115200);
-//  
-//  Serial.println(VERSION);
-//
-//  Serial.print("SDA: ");
-//  Serial.println(SDA);
-//  Serial.print("SCL: ");
-//  Serial.println(SCL);
-//  
-//
+
+void setupWifi()
+{
+  // Connect to Wi-Fi network with SSID and password
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+  }
+
+  String ipStr{ WiFi.localIP().toString() };
+
+  parseConfig(
+    fetchConfig(ipStr.substring(ipStr.lastIndexOf('.') + 1)),
+    [](int port, int activeLevel,
+       const String & headerMarker,
+       const String & num, bool logic)
+      {
+        handlers.push_back(Handler(port, activeLevel, 
+            headerMarker.c_str(), num.c_str(), logic));
+      }
+  );
+
+  initAll(handlers);
+
+  server.begin();
+}
+
+
+void setupPcf()
+{
 //  Serial.println("pcf.begin()");
   pcf.begin();
 //  Serial.println("pcf.pinMode()");
@@ -75,31 +111,72 @@ void setup() {
 //    pcf.digitalWrite(P4, HIGH);
 //  }
 //  Serial.println("Done testing I2C");
-  
+}
 
-  // Connect to Wi-Fi network with SSID and password
-//  Serial.println(ssid);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-//    Serial.print(".");
-  }
-
-
-//  // Print local IP address and start web server
-//  Serial.println("");
-//  Serial.println("WiFi connected.");
-//  Serial.println("IP address: ");
-//  Serial.println(WiFi.localIP());
-
-  server.begin();
-
+void setup()
+{
+  setupWifi();
+  setupPcf(); 
 }
 
 
 byte stateLights[4] = {1, 1, 1, 1};
 PCF8574::DigitalInput currentInput{};
 PCF8574::DigitalInput previousInput{};
+
+unsigned long currentTime = millis();
+unsigned long previousTime = 0;
+const long timeoutTime = 2000;
+
+void handleHttpChannel()
+{
+  WiFiClient client = server.available();   // Listen for incoming clients
+
+  delay(100);
+
+  if (client) {                             // If a new client connects,
+    String currentLine = "";                // make a String to hold incoming data from the client
+    currentTime = millis();
+    previousTime = currentTime;
+    while (client.connected() && currentTime - previousTime <= timeoutTime) { // loop while the client's connected
+      currentTime = millis();
+      if (client.available()) {             // if there's bytes to read from the client,
+        char c = client.read();             // read a byte, then
+        header += c;
+        if (c == '\n') {                    // if the byte is a newline character
+          // if the current line is blank, you got two newline characters in a row.
+          // that's the end of the client HTTP request, so send a response:
+          if (currentLine.length() == 0) {
+            // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+            // and a content-type so the client knows what's coming, then a blank line:
+            client.println(http200.c_str());
+            client.println();
+
+            handleAllInput(handlers, header);
+              
+            client.println(htmlHead.c_str());
+            client.println(htmlBodyBeg.c_str());
+            handleAllOuput(client, handlers);
+            client.println(htmlBodyEnd.c_str());
+
+            // The HTTP response ends with another blank line
+            client.println();
+            // Break out of the while loop
+            break;
+          } else { // if you got a newline, then clear currentLine
+            currentLine = "";
+          }
+        } else if (c != '\r') {  // if you got anything else but a carriage return character,
+          currentLine += c;      // add it to the end of the currentLine
+        }
+      }
+    }
+    // Clear the header variable
+    header = "";
+    // Close the connection
+    client.stop();
+  }
+}
 void loop()
 {
   const auto currentInput = pcf.digitalReadAll();
