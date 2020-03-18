@@ -7,16 +7,16 @@
 #define SDA 0
 #define SCL 2
 
+#include <html_fragments.h>
+#include <parsing_config.h>
+#include <handlers.h>
+
+
 //#include <Wire.h>
 #include <PCF8574.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
 
-#include "c:\Users\grregd\Projects\smarthome\ESP-01\http_server_leds\html_fragments.h"
-#include "c:\Users\grregd\Projects\smarthome\ESP-01\http_server_leds\parsing_config.h"
-#include "c:\Users\grregd\Projects\smarthome\ESP-01\http_server_leds\parsing_config.cpp"
-#include "c:\Users\grregd\Projects\smarthome\ESP-01\http_server_leds\handlers.h"
-#include "c:\Users\grregd\Projects\smarthome\ESP-01\http_server_leds\handlers.cpp"
 
 
 std::string header;
