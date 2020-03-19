@@ -19,7 +19,6 @@
 
 
 
-std::string header;
 
 using namespace Handlers;
 
@@ -55,14 +54,19 @@ void setupWifi()
 
   String ipStr{ WiFi.localIP().toString() };
 
+  std::string versionInfo = VERSION;
+  versionInfo += ", ip: ";
+  versionInfo += WiFi.localIP().toString().c_str();
+
   parseConfig(
     fetchConfig(ipStr.substring(ipStr.lastIndexOf('.') + 1)),
-    [](int port, int activeLevel,
+    [versionInfo](int port, int activeLevel,
        const String & headerMarker,
        const String & num, bool logic)
       {
         handlers.push_back(Handler(port, activeLevel, 
-            headerMarker.c_str(), num.c_str(), logic));
+            headerMarker.c_str(), num.c_str(), logic, 
+            versionInfo));
       }
   );
 
@@ -120,9 +124,6 @@ void setup()
 }
 
 
-byte stateLights[4] = {1, 1, 1, 1};
-PCF8574::DigitalInput currentInput{};
-PCF8574::DigitalInput previousInput{};
 
 unsigned long currentTime = millis();
 unsigned long previousTime = 0;
@@ -130,9 +131,9 @@ const long timeoutTime = 2000;
 
 void handleHttpChannel()
 {
-  WiFiClient client = server.available();   // Listen for incoming clients
+  std::string header;
 
-  delay(100);
+  WiFiClient client = server.available();   // Listen for incoming clients
 
   if (client) {                             // If a new client connects,
     String currentLine = "";                // make a String to hold incoming data from the client
@@ -171,13 +172,16 @@ void handleHttpChannel()
         }
       }
     }
-    // Clear the header variable
-    header = "";
     // Close the connection
     client.stop();
   }
 }
-void loop()
+
+byte stateLights[4] = {1, 1, 1, 1};
+PCF8574::DigitalInput currentInput{};
+PCF8574::DigitalInput previousInput{};
+
+void handlePcfChannel()
 {
   const auto currentInput = pcf.digitalReadAll();
   const auto &di = currentInput;
@@ -197,6 +201,11 @@ void loop()
   pcf.digitalWrite(P7, stateLights[3] == 0 ? HIGH : LOW);
 
   previousInput = currentInput;
-  
+}
+
+void loop()
+{
+  handleHttpChannel();
+  handlePcfChannel();
   delay(100);
 }
