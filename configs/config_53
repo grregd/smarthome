@@ -5,6 +5,20 @@
     "outputs":
     [
         {
+            "port": "0",
+            "initial": "HIGH",
+            "active": "LOW",
+            "headerMarker": "GET /0/",
+            "num": "0"
+        },
+        {
+            "port": "1",
+            "initial": "HIGH",
+            "active": "LOW",
+            "headerMarker": "GET /1/",
+            "num": "1"
+        },
+        {
             "port": "2",
             "initial": "HIGH",
             "active": "LOW",
