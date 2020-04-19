@@ -1,37 +1,67 @@
 {
-"config":
-{
-    "ModuleName": "module_01",
-    "outputs":
-    [
-        {
-            "port": "0",
-            "initial": "HIGH",
-            "active": "LOW",
-            "headerMarker": "GET /0/",
-            "num": "0"
+    "config": {
+        "ModuleName": "module_01",
+        "def": {
+            "inputs": [
+                {
+                    "name": "in0_pcf",
+                    "type": "pcf"
+                },
+                {
+                    "name": "in1_pcf",
+                    "type": "pcf"
+                },
+                {
+                    "name": "in0_http",
+                    "type": "http"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "out4_pcf",
+                    "type": "pcf"
+                }
+            ],
+            "mux": [
+                {
+                    "in": "in0_pcf",
+                    "out": "out4_pcf"
+                },
+                {
+                    "in": "in0_http",
+                    "out": "out4_pcf"
+                }
+            ]
         },
-        {
-            "port": "1",
-            "initial": "HIGH",
-            "active": "LOW",
-            "headerMarker": "GET /1/",
-            "num": "1"
-        },
-        {
-            "port": "2",
-            "initial": "HIGH",
-            "active": "LOW",
-            "headerMarker": "GET /4/",
-            "num": "4"
-        },
-        {
-            "port": "3",
-            "initial": "HIGH",
-            "active": "LOW",
-            "headerMarker": "GET /5/",
-            "num": "5"
-        }
-    ]
-}
+        "outputs": [
+            {
+                "port": "0",
+                "initial": "HIGH",
+                "active": "LOW",
+                "headerMarker": "GET /0/",
+                "num": "0"
+            },
+            {
+                "port": "1",
+                "initial": "HIGH",
+                "active": "LOW",
+                "headerMarker": "GET /1/",
+                "num": "1"
+            },
+            {
+                "port": "2",
+                "initial": "HIGH",
+                "active": "LOW",
+                "headerMarker": "GET /4/",
+                "num": "4"
+            },
+            {
+                "port": "3",
+                "initial": "HIGH",
+                "active": "LOW",
+                "headerMarker": "GET /5/",
+                "num": "5"
+            }
+        ]
+    }
 }
