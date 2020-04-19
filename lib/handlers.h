@@ -1,52 +1,80 @@
-
 #pragma once
 
+#include <ESP8266WiFi.h>
+#include <PCF8574.h>
+
+#include <functional>
+#include <memory>
 #include <string>
 #include <vector>
-#include <functional>
-#include <ESP8266WiFi.h>
 
 class WiFiClient;
 
-namespace Handlers
-{
+namespace Handlers {
 
 template <bool logic>
 struct LevelLogic;
 
 template <>
-struct LevelLogic<true>
-{
+struct LevelLogic<true> {
   static constexpr auto Off = LOW;
   static constexpr auto On = HIGH;
 };
 
 template <>
-struct LevelLogic<false>
-{
+struct LevelLogic<false> {
   static constexpr auto Off = HIGH;
   static constexpr auto On = LOW;
 };
 
-class Handler
-{
-public:
-  Handler(int portNum, int initialState, const std::string &headerMarker, const std::string &num, bool logic,
-          const std::string &versionInfo = std::string());
+class OutputDevice {
+ public:
+  virtual void set(int state) = 0;
+};
+
+class BoardOutputDevice : public OutputDevice {
+ public:
+  BoardOutputDevice(int portNum);
+  void set(int state) override;
+
+ private:
+  int m_portNum;
+};
+
+class PcfOutputDevice : public OutputDevice {
+ public:
+  PcfOutputDevice(PCF8574& pcfDevice, int portNum);
+  void set(int state) override;
+
+ private:
+  PCF8574& m_pcfDevice;
+  int m_portNum;
+};
+
+class Handler {
+ public:
+  Handler(std::unique_ptr<OutputDevice> outputDevice,
+          int portNum,
+          int initialState,
+          const std::string& headerMarker,
+          const std::string& num,
+          bool logic,
+          const std::string& versionInfo = std::string());
 
   void init();
 
   void setOutputState(int state);
 
-  void handleInput(const std::string &header);
+  void handleInput(const std::string& header);
 
-  void handleOutput(WiFiClient &client);
+  void handleOutput(WiFiClient& client);
 
-private:
-  void stdOutputHandler(WiFiClient &client);
-  void configOutputHandler(WiFiClient &client);
+ private:
+  void stdOutputHandler(WiFiClient& client);
+  void configOutputHandler(WiFiClient& client);
 
-private:
+ private:
+  std::unique_ptr<OutputDevice> m_outputDevice;
   int m_portNum = 0;
   int m_initialState = 0;
   std::string m_headerMarkerOn;
@@ -54,13 +82,13 @@ private:
   std::string m_outputState;
   std::string m_num;
   std::string m_versionInfo;
-  std::function<void(WiFiClient &)> m_outputHandler;
+  std::function<void(WiFiClient&)> m_outputHandler;
 };
 
-void initAll(std::vector<Handler> &handlers);
+void initAll(std::vector<Handler>& handlers);
 
-void handleAllInput(std::vector<Handler> &handlers, const std::string &header);
+void handleAllInput(std::vector<Handler>& handlers, const std::string& header);
 
-void handleAllOuput(WiFiClient &client, std::vector<Handler> &handlers);
+void handleAllOuput(WiFiClient& client, std::vector<Handler>& handlers);
 
-} // namespace Handlers
+}  // namespace Handlers
