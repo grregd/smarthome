@@ -1,6 +1,38 @@
 {
     "config": {
         "ModuleName": "module_01",
+        "def": {
+            "inputs": [
+                {
+                    "name": "in0_pcf",
+                    "type": "pcf"
+                },
+                {
+                    "name": "in1_pcf",
+                    "type": "pcf"
+                },
+                {
+                    "name": "in0_http",
+                    "type": "http"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "out4_pcf",
+                    "type": "pcf"
+                }
+            ],
+            "mux": [
+                {
+                    "in": "in0_pcf",
+                    "out": "out4_pcf"
+                },
+                {
+                    "in": "in0_http",
+                    "out": "out4_pcf"
+                }
+            ]
+        },
         "outputs": [
             {
                 "port": "0",
