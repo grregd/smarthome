@@ -3,28 +3,32 @@
         "ModuleName": "module_01",
         "outputs": [
             {
-                "port": "0",
+                "device": "pcf",
+                "port": "4",
                 "initial": "HIGH",
                 "active": "LOW",
                 "headerMarker": "GET /0/",
                 "num": "0"
             },
             {
-                "port": "1",
+                "device": "pcf",
+                "port": "5",
                 "initial": "HIGH",
                 "active": "LOW",
                 "headerMarker": "GET /1/",
                 "num": "1"
             },
             {
-                "port": "2",
+                "device": "pcf",
+                "port": "6",
                 "initial": "HIGH",
                 "active": "LOW",
                 "headerMarker": "GET /4/",
                 "num": "4"
             },
             {
-                "port": "3",
+                "device": "pcf",
+                "port": "7",
                 "initial": "HIGH",
                 "active": "LOW",
                 "headerMarker": "GET /5/",
