@@ -25,6 +25,7 @@ using LogicNegative = LevelLogic<false>;
 BoardOutputDevice::BoardOutputDevice(int portNum)
     : m_portNum(portNum)
 {
+    pinMode(m_portNum, OUTPUT);
 }
 
 void BoardOutputDevice::set(int state)
@@ -32,10 +33,21 @@ void BoardOutputDevice::set(int state)
     digitalWrite(m_portNum, state);
 }
 
+int BoardOutputDevice::get()
+{
+    return digitalRead(m_portNum);
+}
+
+const char* BoardOutputDevice::name() const
+{
+    return "BoardDevice";
+}
+
 PcfOutputDevice::PcfOutputDevice(PCF8574& pcfDevice, int portNum)
     : m_pcfDevice(pcfDevice)
     , m_portNum(portNum)
 {
+    pcfDevice.pinMode(m_portNum, OUTPUT);
 }
 
 void PcfOutputDevice::set(int state)
@@ -43,7 +55,17 @@ void PcfOutputDevice::set(int state)
     m_pcfDevice.digitalWrite(m_portNum, state);
 }
 
-Handler::Handler(std::unique_ptr<OutputDevice> outputDevice,
+int PcfOutputDevice::get()
+{
+    return m_pcfDevice.digitalRead(m_portNum);
+}
+
+const char* PcfOutputDevice::name() const
+{
+    return "PcfDevice";
+}
+
+Handler::Handler(std::unique_ptr<OutputDevice>&& outputDevice,
     int portNum,
     int initialState,
     const std::string& headerMarker,
@@ -62,7 +84,7 @@ Handler::Handler(std::unique_ptr<OutputDevice> outputDevice,
 
 void Handler::init()
 {
-    pinMode(m_portNum, OUTPUT);
+    // pinMode(m_portNum, OUTPUT);
     setOutputState(m_initialState);
 }
 
@@ -119,6 +141,7 @@ void Handler::configOutputHandler(WiFiClient& client)
     char buffer[512];
 
     client.println(mysnprintf(buffer, "<p>%s</p>", m_versionInfo.c_str()));
+    client.println(mysnprintf(buffer, "<p>device: %s</p>", m_outputDevice->name()));
     client.println(mysnprintf(buffer, "<p>portNum: %d</p>\n", m_portNum));
     client.println(
         mysnprintf(buffer, "<p>initialState: %d</p>\n", m_initialState));
