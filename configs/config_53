@@ -5,7 +5,7 @@
             {
                 "device": "pcf",
                 "port": "4",
-                "initial": "HIGH",
+                "initial": "LOW",
                 "active": "LOW",
                 "headerMarker": "GET /0/",
                 "num": "0"
