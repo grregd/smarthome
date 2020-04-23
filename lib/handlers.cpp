@@ -46,18 +46,20 @@ const char* BoardOutputDevice::name() const
 PcfOutputDevice::PcfOutputDevice(PCF8574& pcfDevice, int portNum)
     : m_pcfDevice(pcfDevice)
     , m_portNum(portNum)
+    , m_state(LOW)
 {
     pcfDevice.pinMode(m_portNum, OUTPUT);
 }
 
 void PcfOutputDevice::set(int state)
 {
+    m_state = state;
     m_pcfDevice.digitalWrite(m_portNum, state);
 }
 
 int PcfOutputDevice::get()
 {
-    return m_pcfDevice.digitalRead(m_portNum);
+    return m_state;
 }
 
 const char* PcfOutputDevice::name() const
@@ -65,14 +67,14 @@ const char* PcfOutputDevice::name() const
     return "PcfDevice";
 }
 
-Handler::Handler(std::unique_ptr<OutputDevice>&& outputDevice,
+Handler::Handler(const std::shared_ptr<OutputDevice>& outputDevice,
     int portNum,
     int initialState,
     const std::string& headerMarker,
     const std::string& num,
     bool logic,
     const std::string& versionInfo)
-    : m_outputDevice(std::move(outputDevice))
+    : m_outputDevice(outputDevice)
     , m_portNum(portNum)
     , m_initialState(initialState)
     , m_headerMarkerOn(headerMarker + "on")
@@ -84,19 +86,12 @@ Handler::Handler(std::unique_ptr<OutputDevice>&& outputDevice,
 
 void Handler::init()
 {
-    // pinMode(m_portNum, OUTPUT);
     setOutputState(m_initialState);
 }
 
 void Handler::setOutputState(int state)
 {
-    if (state == LOW)
-        m_outputState = "off";
-    else
-        m_outputState = "on";
-
     m_outputDevice->set(state);
-    // digitalWrite(m_portNum, state);
 }
 
 void Handler::handleInput(const std::string& header)
@@ -121,15 +116,18 @@ void Handler::handleOutput(WiFiClient& client)
 
 void Handler::stdOutputHandler(WiFiClient& client)
 {
-    char buffer[128];
+    char buffer[256];
 
     client.println(mysnprintf(buffer,
-        "<p>GPIO %s - State %s</p>\n",
-        m_num.c_str(),
-        m_outputState.c_str()));
+        "<p>GPIO(%s).%d - State %s, outputDevice.get(): %d</p>\n",
+        m_outputDevice->name(),
+        m_portNum,
+        m_outputDevice->get() == LOW ? "off" : "on",
+        m_outputDevice->get()));
+
     client.println(mysnprintf(buffer, "<p><a href=\"/%s", m_num.c_str()));
 
-    if (m_outputState == "off") {
+    if (m_outputDevice->get() == LOW) {
         client.println("/on\"><button class=\"button\">ON</button></a></p>");
     } else {
         client.println(

@@ -1,4 +1,5 @@
 
+#include <map>
 #include <memory>
 
 #define xstr(s) str(s)
@@ -21,6 +22,7 @@
 using namespace Handlers;
 
 std::vector<Handler> handlers;
+std::map<int, std::shared_ptr<OutputDevice>> outputDevices;
 
 static const auto ON = LOW;
 static const auto OFF = HIGH;
@@ -60,17 +62,16 @@ void setupWifi()
         fetchConfig(ipStr.substring(ipStr.lastIndexOf('.') + 1)),
         [versionInfo](const String& deviceName, int port, int activeLevel, const String& headerMarker,
             const String& num, bool logic) {
-            std::unique_ptr<Handlers::OutputDevice> device { nullptr };
             if (deviceName == "pcf") {
-                device.reset(new Handlers::PcfOutputDevice(pcf, port));
+                outputDevices[port] = std::make_shared<PcfOutputDevice>(pcf, port);
             } else {
-                device.reset(new Handlers::BoardOutputDevice(port));
+                outputDevices[port] = std::make_shared<BoardOutputDevice>(port);
             }
 
             Serial.print(F("adding handler: "));
-            Serial.println(device->name());
+            Serial.println(outputDevices[port]->name());
 
-            handlers.push_back(Handler(std::move(device),
+            handlers.push_back(Handler(outputDevices[port],
                 port, activeLevel, headerMarker.c_str(),
                 num.c_str(), logic, versionInfo));
         });
@@ -192,7 +193,7 @@ PCF8574::DigitalInput previousInput {};
 
 void pcfPinToggle(PCF8574& pcf, int pin)
 {
-    pcf.digitalWrite(pin, pcf.digitalRead(pin) == LOW ? HIGH : LOW);
+    outputDevices[pin]->set(outputDevices[pin]->get() == LOW ? HIGH : LOW);
 }
 
 void handlePcfChannel()
@@ -227,7 +228,6 @@ void setup()
 
 void loop()
 {
-
     handleHttpChannel();
     handlePcfChannel();
     delay(100);

@@ -57,11 +57,12 @@ public:
 private:
     PCF8574& m_pcfDevice;
     int m_portNum;
+    int m_state;
 };
 
 class Handler {
 public:
-    Handler(std::unique_ptr<OutputDevice>&& outputDevice,
+    Handler(const std::shared_ptr<OutputDevice>& outputDevice,
         int portNum,
         int initialState,
         const std::string& headerMarker,
@@ -82,12 +83,11 @@ private:
     void configOutputHandler(WiFiClient& client);
 
 private:
-    std::unique_ptr<OutputDevice> m_outputDevice;
+    std::shared_ptr<OutputDevice> m_outputDevice;
     int m_portNum = 0;
     int m_initialState = 0;
     std::string m_headerMarkerOn;
     std::string m_headerMarkerOff;
-    std::string m_outputState;
     std::string m_num;
     std::string m_versionInfo;
     std::function<void(WiFiClient&)> m_outputHandler;
