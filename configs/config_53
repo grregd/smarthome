@@ -13,7 +13,7 @@
             {
                 "device": "pcf",
                 "port": "5",
-                "initial": "HIGH",
+                "initial": "LOW",
                 "active": "LOW",
                 "headerMarker": "GET /1/",
                 "num": "1"
@@ -21,7 +21,7 @@
             {
                 "device": "pcf",
                 "port": "6",
-                "initial": "HIGH",
+                "initial": "LOW",
                 "active": "LOW",
                 "headerMarker": "GET /4/",
                 "num": "4"
@@ -29,7 +29,7 @@
             {
                 "device": "pcf",
                 "port": "7",
-                "initial": "HIGH",
+                "initial": "LOW",
                 "active": "LOW",
                 "headerMarker": "GET /5/",
                 "num": "5"
