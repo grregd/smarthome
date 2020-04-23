@@ -1,5 +1,6 @@
 
 #include "handlers.h"
+#include "mysnprintf.h"
 
 #include <ESP8266WiFi.h>
 #include <hardwareSerial.h>
@@ -8,16 +9,6 @@
 #include <string>
 
 namespace Handlers {
-template <size_t N>
-char* mysnprintf(char (&buffer)[N], const char* format, ...)
-{
-    va_list vl;
-    va_start(vl, format);
-    vsnprintf(buffer, N, format, vl);
-    va_end(vl);
-
-    return buffer;
-}
 
 using LogicPositive = LevelLogic<true>;
 using LogicNegative = LevelLogic<false>;
