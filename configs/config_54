@@ -1,0 +1,39 @@
+{
+    "config": {
+        "ModuleName": "module_01",
+        "outputs": [
+            {
+                "device": "pcf",
+                "port": "4",
+                "initial": "LOW",
+                "active": "LOW",
+                "headerMarker": "GET /0/",
+                "num": "0"
+            },
+            {
+                "device": "pcf",
+                "port": "5",
+                "initial": "LOW",
+                "active": "LOW",
+                "headerMarker": "GET /1/",
+                "num": "1"
+            },
+            {
+                "device": "pcf",
+                "port": "6",
+                "initial": "LOW",
+                "active": "LOW",
+                "headerMarker": "GET /4/",
+                "num": "4"
+            },
+            {
+                "device": "pcf",
+                "port": "7",
+                "initial": "LOW",
+                "active": "LOW",
+                "headerMarker": "GET /5/",
+                "num": "5"
+            }
+        ]
+    }
+}
