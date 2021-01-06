@@ -13,6 +13,7 @@
 #include <handlers.h>
 #include <html_fragments.h>
 #include <parsing_config.h>
+#include <wifi_status_txt.h>
 
 //#include <Wire.h>
 #include <ESP8266WiFi.h>
@@ -46,11 +47,26 @@ void setupWifi()
 {
     Serial.println(F("setupWifi start"));
 
+    Serial.print("ESP Board MAC Address:  ");
+    Serial.println(WiFi.macAddress());
     // Connect to Wi-Fi network with SSID and password
-    WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
+    switch (WiFi.begin(ssid, password)) {
+    case WL_CONNECTED:
+        Serial.println(F("WL_CONNECTED"));
+        break;
+    case WL_IDLE_STATUS:
+        Serial.println(F("WL_IDLE_STATUS"));
+        break;
     }
+
+    int wifiStatus = 0;
+    do {
+        wifiStatus = WiFi.status();
+        Serial.println(wifiStatusText(wifiStatus));
+        if (wifiStatus != WL_CONNECTED) {
+            delay(500);
+        }
+    } while (wifiStatus != WL_CONNECTED);
 
     String ipStr { WiFi.localIP().toString() };
 
@@ -58,7 +74,7 @@ void setupWifi()
     versionInfo += ", ip: ";
     versionInfo += WiFi.localIP().toString().c_str();
 
-    parseConfig(
+    while (!parseConfig(
         fetchConfig(ipStr.substring(ipStr.lastIndexOf('.') + 1)),
         [versionInfo](const String& deviceName, int port, int activeLevel, const String& headerMarker,
             const String& num, bool logic) {
@@ -74,7 +90,9 @@ void setupWifi()
             handlers.push_back(Handler(outputDevices[port],
                 port, activeLevel, headerMarker.c_str(),
                 num.c_str(), logic, versionInfo));
-        });
+        })) {
+        delay(500);
+    }
 
     Serial.println(F("initAll"));
     initAll(handlers);

@@ -3,7 +3,7 @@
 
 String fetchConfig(const String& id);
 
-void parseConfig(const String& configText,
+bool parseConfig(const String& configText,
     std::function<void(const String&,
         int port,
         int activeLevel,

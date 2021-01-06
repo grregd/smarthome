@@ -14,7 +14,7 @@ String fetchConfig(const String& id)
     static const char host[] = "raw.githubusercontent.com";
     const int httpsPort = 443;
 
-    static const char fingerprint[] PROGMEM = "CC:AA:48:48:66:46:0E:91:53:2C:9C:7C:23:2A:B1:74:4D:29:9D:33";
+    static const char fingerprint[] PROGMEM = "70:94:DE:DD:E6:C4:69:48:3A:92:70:A1:48:56:78:2D:18:64:E0:B7"; //"CC:AA:48:48:66:46:0E:91:53:2C:9C:7C:23:2A:B1:74:4D:29:9D:33";
 
     Serial.print(F("fetchConfig from "));
     Serial.println(String(host) + url);
@@ -78,7 +78,7 @@ String fetchConfig(const String& id)
     return result;
 }
 
-void parseConfig(const String& configText,
+bool parseConfig(const String& configText,
     std::function<void(
         const String& deviceName,
         int port,
@@ -95,7 +95,7 @@ void parseConfig(const String& configText,
         Serial.print(F("deserializeJson() failed: "));
         Serial.println(error.c_str());
 
-        return;
+        return false;
     }
 
     auto config = configDocument[F("config")];
@@ -111,4 +111,6 @@ void parseConfig(const String& configText,
             output[F("num")].as<String>(),
             true);
     }
+
+    return true;
 }
