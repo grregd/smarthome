@@ -1,6 +1,8 @@
 
 #include <map>
 #include <memory>
+#include <tuple>
+#include <vector>
 
 #define xstr(s) str(s)
 #define str(s) #s
@@ -12,6 +14,7 @@
 
 #include <handlers.h>
 #include <html_fragments.h>
+#include <mysnprintf.h>
 #include <parsing_config.h>
 #include <wifi_status_txt.h>
 
@@ -28,7 +31,7 @@ std::map<int, std::shared_ptr<OutputDevice>> outputDevices;
 static const auto ON = LOW;
 static const auto OFF = HIGH;
 
-static const char VERSION[] PROGMEM = "Version: ESP-01+PCF8574 v. 0.1\n"
+static const char VERSION[] PROGMEM = "Version: ESP-12 v. 0.1\n"
                                       "Build date: " __DATE__ "\n"
                                       "Build time: " __TIME__ "\n";
 
@@ -231,10 +234,135 @@ void handlePcfChannel()
     previousInput = currentInput;
 }
 
+void test1()
+{
+    std::vector<int> pins { P5, P4, 13, 12, P2, 10, 14, 16 };
+
+    for (auto pin : pins) {
+        pinMode(pin, OUTPUT);
+    }
+
+    while (true) {
+        for (auto pin : pins) {
+            digitalWrite(pin, 1);
+            delay(500);
+            digitalWrite(pin, 0);
+            delay(500);
+        }
+    }
+}
+
+#define DEBOUNCE_TIME 250
+volatile uint32_t DebounceTimer = 0;
+
+void keyPressed()
+{
+    if (millis() - DEBOUNCE_TIME >= DebounceTimer) {
+        DebounceTimer = millis();
+        Serial.printf("Button has been pressed\n");
+    }
+}
+
+ICACHE_RAM_ATTR void keyPressed_k1()
+{
+    Serial.println(__PRETTY_FUNCTION__);
+    keyPressed();
+}
+
+ICACHE_RAM_ATTR void keyPressed_k2()
+{
+    Serial.println(__PRETTY_FUNCTION__);
+    keyPressed();
+}
+
+ICACHE_RAM_ATTR void keyPressed_k3()
+{
+    Serial.println(__PRETTY_FUNCTION__);
+    keyPressed();
+}
+
+ICACHE_RAM_ATTR void keyPressed_k4()
+{
+    Serial.println(__PRETTY_FUNCTION__);
+    keyPressed();
+}
+
+void test2()
+{
+    std::vector<std::tuple<int, void (*)()>> keys_handlers {
+        std::make_tuple(P2, keyPressed_k1),
+        std::make_tuple(10, keyPressed_k2),
+        std::make_tuple(14, keyPressed_k3),
+        std::make_tuple(16, keyPressed_k4)
+    };
+
+    char buffer[128];
+    for (const auto& handler : keys_handlers) {
+
+        Serial.println(mysnprintf(buffer,
+            "Setting up handler for key %d", std::get<0>(handler)));
+
+        pinMode(std::get<0>(handler), INPUT_PULLUP);
+        attachInterrupt(digitalPinToInterrupt(std::get<0>(handler)),
+            std::get<1>(handler), FALLING);
+    }
+
+    while (true)
+        delay(500);
+}
+
+bool in_range(int value, int reference, int margin)
+{
+    return ((reference - margin) < value) && (value < (reference + margin));
+}
+
+void test3()
+{
+    std::vector<std::tuple<int, const char*, int>> keysInfo {
+        std::make_tuple(1024 * 8 / 8, "key1", P5),
+        std::make_tuple(1024 * 7 / 8 + 41, "key2", P4),
+        std::make_tuple(1024 * 6 / 8 + 61, "key3", P2),
+        std::make_tuple(1024 * 5 / 8 + 30, "key4", 10),
+        std::make_tuple(1024 * 4 / 8 - 41, "key5", 13),
+        std::make_tuple(1024 * 3 / 8 - 20, "key6", 12),
+        std::make_tuple(1024 * 2 / 8 - 10, "key7", 14),
+        std::make_tuple(1024 * 1 / 8 + 10, "key8", 16)
+    };
+
+    for (const auto keyInfo : keysInfo) {
+        pinMode(std::get<2>(keyInfo), OUTPUT);
+    }
+
+    while (true) {
+        int voltage = analogRead(A0);
+
+        if (voltage == 0) {
+            for (const auto keyInfo : keysInfo) {
+                digitalWrite(std::get<2>(keyInfo), 0);
+            }
+        } else {
+            Serial.printf("%d\n", voltage);
+            for (const auto keyInfo : keysInfo) {
+                if (in_range(voltage, std::get<0>(keyInfo), 1024 * 1 / 8 / 3)) {
+                    Serial.printf("%s key pressed\n", std::get<1>(keyInfo));
+                    digitalWrite(std::get<2>(keyInfo), 1);
+                }
+            }
+        }
+
+        delay(100);
+    }
+}
+
 void setup()
 {
     Serial.begin(115200);
+    Serial.println();
+    Serial.println(VERSION);
     Serial.println(F("setup start"));
+
+    test3();
+    return;
 
     setupWifi();
     setupPcf();
@@ -246,7 +374,7 @@ void setup()
 
 void loop()
 {
-    handleHttpChannel();
-    handlePcfChannel();
+    // handleHttpChannel();
+    // handlePcfChannel();
     delay(100);
 }
